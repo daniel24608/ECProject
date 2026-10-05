@@ -158,6 +158,28 @@ def plan_b_reason(trip: Trip, item: Item, risks: list[RiskFlag]) -> str {
     return "; ".join(reasons);
 }
 
+"""Add a Plan B proposal for one planned item, if it needs one and one exists.
+
+The item needs a Plan B when it has a risk flag or does not pass the hard
+filters. Replacements the traveler already rejected for it are skipped.
+Returns the new proposal, or None when nothing was added.
+"""
+def suggest_backup(
+    trip: Trip, proposals: list[Proposal], item: Item, risks: list[RiskFlag]
+) -> Proposal | None {
+    reason = plan_b_reason(trip, item, risks);
+    if reason == "" {
+        return None;
+    }
+    skip_nums = rejected_for(proposals, item.num);
+    backup = find_backup(trip.profile, trip.items, item, skip_nums, "");
+    if backup is None {
+        return None;
+    }
+    add_proposal(trip, proposals, "backup", item.num, backup.num, reason);
+    return proposals[-1];
+}
+
 """Rebuild the pending Plan B suggestions.
 
 Old pending backups are dropped and new ones are made for every planned item
@@ -187,15 +209,7 @@ def refresh_backups(trip: Trip) {
         if not item.selected or item.disrupted or item.num in skip_targets {
             continue;
         }
-        reason = plan_b_reason(trip, item, risks);
-        if reason == "" {
-            continue;
-        }
-        skip_nums = rejected_for(kept, item.num);
-        backup = find_backup(trip.profile, trip.items, item, skip_nums, "");
-        if backup is not None {
-            add_proposal(trip, kept, "backup", item.num, backup.num, reason);
-        }
+        suggest_backup(trip, kept, item, risks);
     }
     trip.proposals = kept;
 }
@@ -552,7 +566,12 @@ def:pub accept_proposal(num: int) -> TripView {
     return build_view(trip, True, message);
 }
 
-"""Reject a proposal. The plan itself does not change."""
+"""Reject a proposal. The plan itself does not change.
+
+If the item still needs a Plan B, the next cheapest option that passes the
+hard filters is suggested right away (the rejected one is never suggested
+again). Other pending proposals keep their numbers.
+"""
 def:pub reject_proposal(num: int) -> TripView {
     trip = find_trip();
     if trip is None {
@@ -563,8 +582,32 @@ def:pub reject_proposal(num: int) -> TripView {
         return error_view("There is no pending proposal #" + str(num) + ".");
     }
     proposal.status = "rejected";
-    save_lists(trip, trip.items, trip.proposals);
-    return build_view(trip, True, "Rejected proposal #" + str(num) + ". The plan is unchanged.");
+    message = "Rejected proposal #" + str(num) + ". The plan is unchanged.";
+
+    # Offer the next option for the same item, if it still needs one.
+    proposals = list(trip.proposals);
+    target = find_item(trip.items, proposal.target_num);
+    if target is not None {
+        is_active = target.selected and not target.disrupted;
+        has_repair = target.num in nums_with_pending_repair(proposals);
+        if is_active and not has_repair {
+            risks = trip_risks(trip.profile, trip.items, trip.lost_money, today_text());
+            next_proposal = suggest_backup(trip, proposals, target, risks);
+            if next_proposal is not None {
+                replacement = find_item(trip.items, next_proposal.replacement_num);
+                if replacement is not None {
+                    message = message + " Next option for " + target.name + ": proposal #"
+                        + str(next_proposal.num) + ", " + replacement.name + ".";
+                }
+            } elif plan_b_reason(trip, target, risks) != "" {
+                message = message + " No other option for " + target.name
+                    + " passes the hard filters.";
+            }
+        }
+    }
+
+    save_lists(trip, trip.items, proposals);
+    return build_view(trip, True, message);
 }
 
 # ---------------------------------------------------------------- sample data
