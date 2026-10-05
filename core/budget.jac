@@ -32,12 +32,14 @@ def selected_total(items: list[Item]) -> float {
 """Build the ledger.
 
 The contingency is set aside first, so the usable budget is the total budget
-minus the contingency. Status is "over" when spending passes the usable budget.
+minus the contingency. `lost_money` is money already lost to refund rules
+when an item was swapped out; it still counts as spent.
+Status is "over" when spending passes the usable budget.
 """
-def build_ledger(profile: Profile, items: list[Item]) -> Ledger {
+def build_ledger(profile: Profile, items: list[Item], lost_money: float) -> Ledger {
     contingency_amount = profile.budget * profile.contingency_percent / 100.0;
     usable_budget = profile.budget - contingency_amount;
-    spent = selected_total(items);
+    spent = selected_total(items) + lost_money;
     remaining = usable_budget - spent;
 
     percent_used = 0.0;

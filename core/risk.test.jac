@@ -7,7 +7,7 @@ test "non-refundable and unknown policies are flagged" {
         Item(num=2, name="B", refund_policy="unknown"),
         Item(num=3, name="C", refund_policy="refundable")
     ];
-    flags = trip_risks(profile, items, "2026-06-01");
+    flags = trip_risks(profile, items, 0.0, "2026-06-01");
     assert len(flags) == 2;
     assert flags[0].item_num == 1;
     assert flags[1].item_num == 2;
@@ -23,7 +23,7 @@ test "deadline within 7 days is flagged, later is not" {
 test "budget over 90 percent used is flagged" {
     profile = Profile(budget=1000.0, contingency_percent=0.0);
     items = [Item(num=1, cost=950.0, refund_policy="refundable")];
-    flags = trip_risks(profile, items, "2026-06-01");
+    flags = trip_risks(profile, items, 0.0, "2026-06-01");
     assert len(flags) == 1;
     assert flags[0].item_name == "Whole trip";
 }

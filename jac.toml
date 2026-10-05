@@ -1,0 +1,26 @@
+[project]
+name = "travel_planner"
+default-app = "web"
+
+[apps.web]
+kind = "web-app"
+entry-point = "web.main"
+
+[apps.mobile]
+kind = "mobile"
+entry-point = "mobile.main"
+
+[apps.cli]
+kind = "cli"
+entry-point = "cli.main"
+
+[apps.planner]
+kind = "service"
+entry-point = "core.server"
+
+[dependencies.npm]
+react-native-web = "^0.21.2"
+
+# Plain logic modules run as normal server code (never compiled to native).
+[placement]
+default = "server"

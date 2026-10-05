@@ -38,10 +38,13 @@ def refund_loss(item: Item) -> tuple[float, bool] {
 
 The old payment is already in the current total, so we remove it once,
 add back only the part we cannot get refunded, then add the new price.
-This way the original payment is never counted twice.
+This way the original payment is never counted twice. `lost_money` is
+money already lost on earlier swaps, so the total matches the ledger.
 """
-def compare_swap(items: list[Item], target: Item, replacement: Item) -> Comparison {
-    current_total = selected_total(items);
+def compare_swap(
+    items: list[Item], lost_money: float, target: Item, replacement: Item
+) -> Comparison {
+    current_total = selected_total(items) + lost_money;
     (loss, known) = refund_loss(target);
     cash_now = item_total(replacement);
 

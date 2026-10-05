@@ -63,7 +63,9 @@ def item_risks(item: Item, today: str) -> list[RiskFlag] {
 }
 
 """All risk flags for the trip: every selected item plus the budget check."""
-def trip_risks(profile: Profile, items: list[Item], today: str) -> list[RiskFlag] {
+def trip_risks(
+    profile: Profile, items: list[Item], lost_money: float, today: str
+) -> list[RiskFlag] {
     flags: list[RiskFlag] = [];
     for item in items {
         if item.selected {
@@ -71,7 +73,7 @@ def trip_risks(profile: Profile, items: list[Item], today: str) -> list[RiskFlag
         }
     }
 
-    ledger = build_ledger(profile, items);
+    ledger = build_ledger(profile, items, lost_money);
     if ledger.percent_used > BUDGET_WARNING_PERCENT {
         flags.append(
             RiskFlag(
