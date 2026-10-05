@@ -1,6 +1,7 @@
 # Trip Planner: a travel planner with Plan B and disruption replanning
 
 **Name:** Daniel Hu
+
 **UMID:** 41313424
 
 My personal planning tool is a small travel planner written in [Jac](https://www.jaseci.org/).
