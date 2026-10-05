@@ -202,25 +202,6 @@ This runs the tests in `core/*.test.jac` for the budget ledger, validation, risk
 choice, replanning, the comparison math, and the display helpers. They use plain objects, so
 they do not need the server or the database.
 
-## Project layout
-
-```
-jac.toml             apps (web, mobile, cli, planner), settings
-core/models.jac      Profile, Item, Proposal
-core/views.jac       TripView / ProposalView: what every endpoint returns
-core/budget.jac      ledger totals and remaining budget
-core/validate.jac    hard-filter checks (pass / fail / unresolved)
-core/risk.jac        rule-based risk flags
-core/backup.jac      Plan B choice
-core/replan.jac      downstream items and repair plan
-core/compare.jac     cash now, refund loss, projected total
-core/format.jac      money / percent text for the clients
-core/server.jac      the planner service: storage, endpoints, sample trip
-web/                 browser UI (main.jac, components/, styles.css)
-mobile/              phone UI (main.jac, TripScreen.jac, theme.jac)
-cli/                 terminal commands (main.jac, show.jac)
-```
-
 ## Known limitations and choices
 
 - One trip at a time and no user accounts (out of scope for this demo).
