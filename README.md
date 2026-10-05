@@ -1,7 +1,7 @@
 # Trip Planner: a travel planner with Plan B and disruption replanning
 
-**Name:** _[YOUR NAME HERE]_
-**UMID:** _[YOUR UMID HERE]_
+**Name:** Daniel Hu
+**UMID:** 41313424
 
 My personal planning tool is a small travel planner written in [Jac](https://www.jaseci.org/).
 You enter your trip and the hotels, flights, and activities you are considering, and the
