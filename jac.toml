@@ -28,3 +28,7 @@ default = "server"
 # The form endpoints take one plain parameter per form field on purpose.
 [check.lint]
 ignore = ["too-many-params"]
+
+# `jac test` runs the tests for the shared planning logic.
+[test]
+directories = ["core"]
