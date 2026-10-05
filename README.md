@@ -110,8 +110,12 @@ quick-add form.
 **Easiest: in a browser (no phone needed).** Keep `jac run` running, and in another terminal:
 
 ```bash
+jac build mobile --platform web       # first time only: compiles the mobile app
 jac run --dev --platform web mobile
 ```
+
+(The build step is needed once on a fresh checkout. Without it, the dev preview shows a
+blank page and logs `Failed to resolve import '/mobile/compiled/_entry.js'`.)
 
 Open the `App:` URL it prints (usually **http://localhost:8003** when the web app is already
 on 8000). Use a narrow browser window or the browser's phone view. This is the way I tested it.
