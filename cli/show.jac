@@ -1,14 +1,7 @@
 """Printing helpers for the CLI. They only format data; no planning logic."""
 
 import from core.views { TripView, ProposalView }
-
-"""Money as text, for example 1234.5 -> "$1,234.50"."""
-def money(amount: float) -> str {
-    if amount < 0 {
-        return "-$" + f"{-amount:,.2f}";
-    }
-    return "$" + f"{amount:,.2f}";
-}
+import from core.format { money, percent }
 
 """Print the server's message, marked as an error when the call failed."""
 def show_message(view: TripView) {
@@ -50,7 +43,7 @@ def show_summary(view: TripView) {
         + " = usable " + money(ledger.usable_budget));
     print("Spent " + money(ledger.spent)
         + "   Remaining " + money(ledger.remaining)
-        + "   (" + str(round(ledger.percent_used, 1)) + "% used, " + ledger.status.upper() + " budget)");
+        + "   (" + percent(ledger.percent_used) + " used, " + ledger.status.upper() + " budget)");
 }
 
 """Print every item, planned items first, with its hard-filter result."""
@@ -85,7 +78,8 @@ def show_items(view: TripView) {
     for item in view.items {
         if not item.selected {
             print("  #" + str(item.num) + " " + item.kind + ": " + item.name
-                + "  " + item.date + "  " + money(item.cost + item.taxes_fees));
+                + "  " + item.date + "  " + money(item.cost + item.taxes_fees)
+                + ("  [disrupted]" if item.disrupted else ""));
         }
     }
 }

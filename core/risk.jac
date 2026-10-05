@@ -3,6 +3,7 @@
 import from datetime { date }
 import from core.models { Profile, Item }
 import from core.budget { build_ledger }
+import from core.format { percent }
 
 # A cancellation deadline this many days away (or fewer) is flagged.
 glob DEADLINE_WARNING_DAYS: int = 7,
@@ -80,10 +81,10 @@ def trip_risks(
                 item_num=0,
                 item_name="Whole trip",
                 reason="budget is "
-                + str(round(ledger.percent_used, 1))
-                + "% used (over "
-                + str(round(BUDGET_WARNING_PERCENT))
-                + "%)"
+                + percent(ledger.percent_used)
+                + " used (over "
+                + percent(BUDGET_WARNING_PERCENT)
+                + ")"
             )
         );
     }
