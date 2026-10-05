@@ -80,7 +80,7 @@ def trip_risks(
                 item_num=0,
                 item_name="Whole trip",
                 reason="budget is "
-                + str(round(ledger.percent_used))
+                + str(round(ledger.percent_used, 1))
                 + "% used (over "
                 + str(round(BUDGET_WARNING_PERCENT))
                 + "%)"

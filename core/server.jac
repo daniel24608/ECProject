@@ -10,6 +10,7 @@ shared graph, so every client sees the same single trip.
 """
 
 import from datetime { date, timedelta }
+import from core.views { TripView, ProposalView }
 import from core.models {
     Profile,
     Item,
@@ -18,12 +19,12 @@ import from core.models {
     FLAG_VALUES,
     REFUND_POLICIES
 }
-import from core.budget { Ledger, build_ledger }
-import from core.validate { CheckResult, check_item, check_selected }
+import from core.budget { build_ledger }
+import from core.validate { check_item, check_selected }
 import from core.risk { RiskFlag, trip_risks }
 import from core.backup { find_backup }
 import from core.replan { plan_repair }
-import from core.compare { Comparison, compare_swap, refund_loss }
+import from core.compare { compare_swap, refund_loss }
 
 """The one stored trip. It hangs off `root`, which makes it persistent."""
 node Trip {
@@ -34,35 +35,6 @@ node Trip {
         lost_money: float = 0.0,
         next_item_num: int = 1,
         next_proposal_num: int = 1;
-}
-
-"""A proposal plus the names and numbers a person needs to decide on it."""
-obj ProposalView {
-    has num: int = 0,
-        source: str = "",
-        status: str = "",
-        reason: str = "",
-        target_num: int = 0,
-        target_name: str = "",
-        replacement_num: int = 0,
-        replacement_name: str = "",
-        replacement_date: str = "",
-        comparison: Comparison = Comparison();
-}
-
-"""Everything a client shows. Every endpoint returns one of these."""
-obj TripView {
-    has ok: bool = True,
-        message: str = "",
-        has_trip: bool = False,
-        today: str = "",
-        profile: Profile = Profile(),
-        items: list[Item] = [],
-        ledger: Ledger = Ledger(),
-        checks: list[CheckResult] = [],
-        risks: list[RiskFlag] = [],
-        proposals: list[ProposalView] = [],
-        replan_notes: list[str] = [];
 }
 
 # ---------------------------------------------------------------- helpers
@@ -352,12 +324,12 @@ def:pub get_trip -> TripView {
     return build_view(find_trip(), True, "");
 }
 
-"""Create (or replace) the trip profile. Clears all items and proposals.
+"""Save a new trip profile. Clears all items and proposals.
 
 Dietary needs may arrive as one comma-separated entry from a form, so they
 are joined and split again into a clean list.
 """
-def:pub init_trip(new_profile: Profile) -> TripView {
+def save_profile(new_profile: Profile) -> TripView {
     profile = Profile(
         destination=new_profile.destination.strip(),
         start_date=new_profile.start_date.strip(),
@@ -386,12 +358,11 @@ def:pub init_trip(new_profile: Profile) -> TripView {
     return build_view(trip, True, "Trip to " + profile.destination + " created.");
 }
 
-"""Add a hotel, flight, or activity typed in by the user.
+"""Save a new item. The server gives it a number and cleans up the text.
 
-The server gives the item its number and cleans up the text fields.
 An item with `selected` False is kept as an option only.
 """
-def:pub add_item(new_item: Item) -> TripView {
+def save_item(new_item: Item) -> TripView {
     trip = find_trip();
     if trip is None {
         return error_view("Create a trip first.");
@@ -425,6 +396,77 @@ def:pub add_item(new_item: Item) -> TripView {
     trip.next_item_num = trip.next_item_num + 1;
     refresh_backups(trip);
     return build_view(trip, True, "Added #" + str(item.num) + " " + item.name + ".");
+}
+
+"""Create (or replace) the trip from the profile form.
+
+The parameters are plain values so every client can send them easily.
+`dietary_needs` is comma-separated text, for example "vegan, nut allergy".
+"""
+def:pub init_trip(
+    destination: str,
+    start_date: str,
+    end_date: str,
+    budget: float,
+    contingency_percent: float = 10.0,
+    travelers: int = 1,
+    with_kids: bool = False,
+    with_pet: bool = False,
+    dietary_needs: str = "",
+    needs_accessibility: bool = False
+) -> TripView {
+    profile = Profile(
+        destination=destination,
+        start_date=start_date,
+        end_date=end_date,
+        budget=budget,
+        contingency_percent=contingency_percent,
+        travelers=travelers,
+        with_kids=with_kids,
+        with_pet=with_pet,
+        dietary_needs=[dietary_needs],
+        needs_accessibility=needs_accessibility
+    );
+    return save_profile(profile);
+}
+
+"""Add a hotel, flight, or activity typed in by the user.
+
+Flags are "yes", "no", or "unknown". `selected` False keeps it as an option.
+"""
+def:pub add_item(
+    kind: str,
+    name: str,
+    item_date: str,
+    cost: float,
+    taxes_fees: float = 0.0,
+    city: str = "",
+    pet_friendly: str = "unknown",
+    kid_friendly: str = "unknown",
+    accessible: str = "unknown",
+    diet_friendly: str = "unknown",
+    refund_policy: str = "unknown",
+    cancel_deadline: str = "",
+    fixed: bool = False,
+    selected: bool = True
+) -> TripView {
+    item = Item(
+        kind=kind,
+        name=name,
+        city=city,
+        date=item_date,
+        cost=cost,
+        taxes_fees=taxes_fees,
+        pet_friendly=pet_friendly,
+        kid_friendly=kid_friendly,
+        accessible=accessible,
+        diet_friendly=diet_friendly,
+        refund_policy=refund_policy,
+        cancel_deadline=cancel_deadline,
+        fixed=fixed,
+        selected=selected
+    );
+    return save_item(item);
 }
 
 """Mark a planned item as disrupted and propose repairs for it and later items."""
@@ -610,12 +652,12 @@ def:pub seed_trip -> TripView {
         dietary_needs=["vegetarian"],
         needs_accessibility=False
     );
-    view = init_trip(profile);
+    view = save_profile(profile);
     if not view.ok {
         return view;
     }
     for item in sample_items(start) {
-        add_item(item);
+        save_item(item);
     }
     return build_view(find_trip(), True, "Loaded the sample Lisbon trip.");
 }

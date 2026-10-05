@@ -24,3 +24,7 @@ react-native-web = "^0.21.2"
 # Plain logic modules run as normal server code (never compiled to native).
 [placement]
 default = "server"
+
+# The form endpoints take one plain parameter per form field on purpose.
+[check.lint]
+ignore = ["too-many-params"]
