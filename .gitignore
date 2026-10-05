@@ -1,0 +1,13 @@
+# local tool settings
+.claude/
+CLAUDE.md
+
+# Jac build output, caches, and local data
+.jac/
+node_modules/
+dist/
+server.log
+__pycache__/
+*.pyc
+assignment.txt
+travel-planner-spec.pdf
